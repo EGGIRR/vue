@@ -1,4 +1,10 @@
 Vue.component('product', {
+    props: {
+        premium: {
+            type: Boolean,
+            required: true,
+        }
+    },
     template: `
 <div class="product">
 <div class="product-image">
@@ -74,18 +80,14 @@ Vue.component('product', {
             selectedVariant: 0,
         }
     },
-    props: {
-        premium: {
-            type: Boolean,
-            required: true
-        }
-    },
     methods: {
         addToCart() {
-            this.cart += 1
+            this.$emit('add-to-cart',
+                this.variants[this.selectedVariant].variantId);
         },
         deleteFromCart() {
-            this.cart -= 1
+            this.$emit('delete-from-cart',
+                this.variants[this.selectedVariant].variantId);
         },
         updateProduct(index) {
             this.selectedVariant = index;
@@ -118,6 +120,15 @@ Vue.component('product', {
 let app = new Vue({
     el: '#app',
     data: {
-        premium: true
+        premium: true,
+        cart: []
+    },
+    methods: {
+        updateCart(id) {
+            this.cart.push(id);
+        },
+        deleteCart() {
+            this.cart.pop();
+        }
     }
 })

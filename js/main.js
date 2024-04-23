@@ -210,6 +210,7 @@ Vue.component("product-tabs", {
          >{{ tab }}</span>
        </ul>
        <div v-show="selectedTab === 'Reviews'">
+         <p>Average rating: {{ averageRating }}</p>
          <p v-if="!reviews.length">There are no reviews yet.</p>
          <ul>
            <li v-for="review in reviews">
@@ -236,6 +237,18 @@ Vue.component("product-tabs", {
             tabs: ["Reviews", "Make a Review", "Shipping", "Details"],
             selectedTab: "Reviews",
         }
+    },
+    computed: {
+        averageRating() {
+            if (this.reviews.length === 0) {
+                return "Not rated";
+            }
+            let totalRating = 0;
+            for (let i = 0; i < this.reviews.length; i++) {
+                totalRating += this.reviews[i].rating;
+            }
+            return (totalRating / this.reviews.length).toFixed(2);
+        },
     },
 });
 

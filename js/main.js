@@ -3,6 +3,10 @@ Vue.component("product", {
   mounted() {
     eventBus.$on("review-submitted", (productReview) => {
       this.reviews.push(productReview);
+      let reviewsInStorage = JSON.parse(localStorage.getItem('productReviews')) || [];
+      reviewsInStorage.push(productReview);
+      localStorage.setItem('productReviews', JSON.stringify(reviewsInStorage));
+      location.reload()
     });
   },
   props: {
@@ -202,9 +206,9 @@ Vue.component("product-tabs", {
          >{{ tab }}</span>
        </ul>
        <div v-show="selectedTab === 'Reviews'">
-         <p v-if="!reviews.length">There are no reviews yet.</p>
+         <p v-if="!prodrev.length">There are no reviews yet.</p>
          <ul>
-           <li v-for="review in reviews">
+           <li v-for="review in prodrev">
               <p>Name: {{ review.name }}</p>
               <p>Rating: {{ review.rating }}</p>
               <p>Review:{{ review.review }}</p>
@@ -227,6 +231,7 @@ Vue.component("product-tabs", {
     return {
       tabs: ["Reviews", "Make a Review", "Shipping", "Details"],
       selectedTab: "Reviews",
+      prodrev: JSON.parse(localStorage.getItem("productReviews")) || [],
     };
   },
 });

@@ -1,21 +1,18 @@
 let eventBus = new Vue();
 Vue.component("product", {
-  mounted() {
-    eventBus.$on("review-submitted", (productReview) => {
-      this.reviews.push(productReview);
-      let reviewsInStorage = JSON.parse(localStorage.getItem('productReviews')) || [];
-      reviewsInStorage.push(productReview);
-      localStorage.setItem('productReviews', JSON.stringify(reviewsInStorage));
-      location.reload()
-    });
-  },
-  props: {
-    premium: {
-      type: Boolean,
-      required: true,
+    mounted() {
+        eventBus.$on("review-submitted", (productReview) => {
+            this.reviews.push(productReview);
+            this.save();
+        });
     },
-  },
-  template: `
+    props: {
+        premium: {
+            type: Boolean,
+            required: true,
+        },
+    },
+    template: `
 <div class="product">
 <div class="product-image">
 <img :src="image" :alt="altText"/>
@@ -52,69 +49,72 @@ Vue.component("product", {
         <product-tabs :reviews="reviews"></product-tabs>
 </div>
 `,
-  data() {
-    return {
-      product: "Socks",
-      description: "A pair of warm, fuzzy socks",
-      brand: "Vue Mastery",
-      altText: "A pair of socks",
-      link: "https://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=socks",
-      inventory: 100,
-      variants: [
-        {
-          variantId: 2234,
-          variantColor: "green",
-          variantImage: "./assets/vmSocks-green-onWhite.jpg",
-          variantQuantity: 10,
-          onSale: true,
+    data() {
+        return {
+            product: "Socks",
+            description: "A pair of warm, fuzzy socks",
+            brand: "Vue Mastery",
+            altText: "A pair of socks",
+            link: "https://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=socks",
+            inventory: 100,
+            variants: [
+                {
+                    variantId: 2234,
+                    variantColor: "green",
+                    variantImage: "./assets/vmSocks-green-onWhite.jpg",
+                    variantQuantity: 10,
+                    onSale: true,
+                },
+                {
+                    variantId: 2235,
+                    variantColor: "blue",
+                    variantImage: "./assets/vmSocks-blue-onWhite.jpg",
+                    variantQuantity: 0,
+                    onSale: false,
+                },
+            ],
+            sizes: ["S", "M", "L", "XL", "XXL", "XXXL"],
+            cart: 0,
+            reviews: [],
+            selectedVariant: 0,
+        };
+    },
+    methods: {
+        save() {
+            localStorage.setItem('productReview', JSON.stringify(this.reviews))
         },
-        {
-          variantId: 2235,
-          variantColor: "blue",
-          variantImage: "./assets/vmSocks-blue-onWhite.jpg",
-          variantQuantity: 0,
-          onSale: false,
+        addToCart() {
+            this.$emit("add-to-cart", this.variants[this.selectedVariant].variantId);
         },
-      ],
-      sizes: ["S", "M", "L", "XL", "XXL", "XXXL"],
-      cart: 0,
-      reviews: [],
-      selectedVariant: 0,
-    };
-  },
-  methods: {
-    addToCart() {
-      this.$emit("add-to-cart", this.variants[this.selectedVariant].variantId);
+        deleteFromCart() {
+            this.$emit(
+                "delete-from-cart",
+                this.variants[this.selectedVariant].variantId,
+            );
+        },
+        updateProduct(index) {
+            this.selectedVariant = index;
+            console.log(index);
+        },
     },
-    deleteFromCart() {
-      this.$emit(
-        "delete-from-cart",
-        this.variants[this.selectedVariant].variantId,
-      );
+    computed: {
+        title() {
+            return this.brand + " " + this.product;
+        },
+        image() {
+            return this.variants[this.selectedVariant].variantImage;
+        },
+        inStock() {
+            return this.variants[this.selectedVariant].variantQuantity;
+        },
+        sale() {
+            return this.variants[this.selectedVariant].onSale;
+        },
     },
-    updateProduct(index) {
-      this.selectedVariant = index;
-      console.log(index);
-    },
-  },
-  computed: {
-    title() {
-      return this.brand + " " + this.product;
-    },
-    image() {
-      return this.variants[this.selectedVariant].variantImage;
-    },
-    inStock() {
-      return this.variants[this.selectedVariant].variantQuantity;
-    },
-    sale() {
-      return this.variants[this.selectedVariant].onSale;
-    },
-  },
 });
 
 Vue.component("product-review", {
-  template: `
+    template: `
 <form class="review-form" @submit.prevent="onSubmit">
     <p v-if="errors.length">
         <b>Please correct the following error(s):</b>
@@ -156,47 +156,51 @@ Vue.component("product-review", {
     </p>
 </form>
 `,
-  data() {
-    return {
-      name: null,
-      review: null,
-      rating: null,
-      choice: null,
-      errors: [],
-    };
-  },
-  methods: {
-    onSubmit() {
-      if (this.name && this.review && this.rating && this.choice) {
-        let productReview = {
-          name: this.name,
-          review: this.review,
-          rating: this.rating,
-          choice: this.choice,
+    data() {
+        return {
+            name: null,
+            review: null,
+            rating: null,
+            choice: null,
+            errors: [],
         };
-        eventBus.$emit("review-submitted", productReview);
-        this.name = null;
-        this.review = null;
-        this.rating = null;
-        this.choice = null;
-      } else {
-        if (!this.name) this.errors.push("Name required.");
-        if (!this.review) this.errors.push("Review required.");
-        if (!this.rating) this.errors.push("Rating required.");
-        if (!this.choice) this.errors.push("Choice required.");
-      }
     },
-  },
+    methods: {
+        onSubmit() {
+            if (this.name && this.review && this.rating && this.choice) {
+                let productReview = {
+                    name: this.name,
+                    review: this.review,
+                    rating: this.rating,
+                    choice: this.choice,
+                };
+                eventBus.$emit("review-submitted", productReview);
+                this.name = null;
+                this.review = null;
+                this.rating = null;
+                this.choice = null;
+            } else {
+                if (!this.name) this.errors.push("Name required.");
+                if (!this.review) this.errors.push("Review required.");
+                if (!this.rating) this.errors.push("Rating required.");
+                if (!this.choice) this.errors.push("Choice required.");
+            }
+        },
+    },
 });
 
 Vue.component("product-tabs", {
-  props: {
-    reviews: {
-      type: Array,
-      required: false,
+    mounted() {
+        if (!localStorage.getItem('productReview')) return
+        this.reviews = JSON.parse(localStorage.getItem('productReview'));
     },
-  },
-  template: `
+    props: {
+        reviews: {
+            type: Array,
+            required: false,
+        },
+    },
+    template: `
      <div>   
        <ul>
          <span class="tab"
@@ -206,9 +210,9 @@ Vue.component("product-tabs", {
          >{{ tab }}</span>
        </ul>
        <div v-show="selectedTab === 'Reviews'">
-         <p v-if="!prodrev.length">There are no reviews yet.</p>
+         <p v-if="!reviews.length">There are no reviews yet.</p>
          <ul>
-           <li v-for="review in prodrev">
+           <li v-for="review in reviews">
               <p>Name: {{ review.name }}</p>
               <p>Rating: {{ review.rating }}</p>
               <p>Review:{{ review.review }}</p>
@@ -227,57 +231,56 @@ Vue.component("product-tabs", {
        </div>
      </div>
 `,
-  data() {
-    return {
-      tabs: ["Reviews", "Make a Review", "Shipping", "Details"],
-      selectedTab: "Reviews",
-      prodrev: JSON.parse(localStorage.getItem("productReviews")) || [],
-    };
-  },
+    data() {
+        return {
+            tabs: ["Reviews", "Make a Review", "Shipping", "Details"],
+            selectedTab: "Reviews",
+        }
+    },
 });
 
 Vue.component("product-shipping", {
-  template: `
+    template: `
      <p>Shipping: {{ shipping }}</p>
     `,
-  computed: {
-    shipping() {
-      if (this.premium) {
-        return "Free";
-      } else {
-        return 2.99;
-      }
+    computed: {
+        shipping() {
+            if (this.premium) {
+                return "Free";
+            } else {
+                return 2.99;
+            }
+        },
     },
-  },
 });
 
 Vue.component("product-details", {
-  template: `
+    template: `
             <div class="product-details">
                 <ul>
                     <li v-for="detail in details">{{ detail }}</li>
                 </ul>
             </div>
     `,
-  data() {
-    return {
-      details: ["80% cotton", "20% polyester", "Gender-neutral"],
-    };
-  },
+    data() {
+        return {
+            details: ["80% cotton", "20% polyester", "Gender-neutral"],
+        };
+    },
 });
 
 let app = new Vue({
-  el: "#app",
-  data: {
-    premium: true,
-    cart: [],
-  },
-  methods: {
-    updateCart(id) {
-      this.cart.push(id);
+    el: "#app",
+    data: {
+        premium: true,
+        cart: [],
     },
-    deleteCart() {
-      this.cart.pop();
+    methods: {
+        updateCart(id) {
+            this.cart.push(id);
+        },
+        deleteCart() {
+            this.cart.pop();
+        },
     },
-  },
 });

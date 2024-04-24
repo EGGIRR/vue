@@ -3,7 +3,10 @@ Vue.component("product", {
     mounted() {
         eventBus.$on("review-submitted", (productReview) => {
             this.reviews.push(productReview);
-            this.save();
+            let reviewsInStorage = JSON.parse(localStorage.getItem('productReviews')) || [];
+            reviewsInStorage.push(productReview);
+            localStorage.setItem('productReviews', JSON.stringify(reviewsInStorage));
+            this.update();
         });
     },
     props: {
@@ -80,8 +83,8 @@ Vue.component("product", {
         };
     },
     methods: {
-        save() {
-            localStorage.setItem('productReview', JSON.stringify(this.reviews))
+        update(){
+          location.reload();
         },
         addToCart() {
             this.$emit("add-to-cart", this.variants[this.selectedVariant].variantId);
@@ -190,10 +193,6 @@ Vue.component("product-review", {
 });
 
 Vue.component("product-tabs", {
-    mounted() {
-        if (!localStorage.getItem('productReview')) return
-        this.reviews = JSON.parse(localStorage.getItem('productReview'));
-    },
     props: {
         reviews: {
             type: Array,
@@ -211,9 +210,9 @@ Vue.component("product-tabs", {
        </ul>
        <div v-show="selectedTab === 'Reviews'">
          <p>Average rating: {{ averageRating }}</p>
-         <p v-if="!reviews.length">There are no reviews yet.</p>
+         <p v-if="!prodrev.length">There are no reviews yet.</p>
          <ul>
-           <li v-for="review in reviews">
+           <li v-for="review in prodrev">
               <p>Name: {{ review.name }}</p>
               <p>Rating: {{ review.rating }}</p>
               <p>Review:{{ review.review }}</p>
@@ -236,18 +235,19 @@ Vue.component("product-tabs", {
         return {
             tabs: ["Reviews", "Make a Review", "Shipping", "Details"],
             selectedTab: "Reviews",
+            prodrev: JSON.parse(localStorage.getItem("productReviews")) || [],
         }
     },
     computed: {
         averageRating() {
-            if (this.reviews.length === 0) {
+            if (this.prodrev.length === 0) {
                 return "Not rated";
             }
             let totalRating = 0;
-            for (let i = 0; i < this.reviews.length; i++) {
-                totalRating += this.reviews[i].rating;
+            for (let i = 0; i < this.prodrev.length; i++) {
+                totalRating += this.prodrev[i].rating;
             }
-            return (totalRating / this.reviews.length).toFixed(2);
+            return (totalRating / this.prodrev.length).toFixed(2);
         },
     },
 });
